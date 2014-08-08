@@ -22,16 +22,26 @@ def findImages(url):
 def downloadImage(url,imgTag,downloads):
 		
 	imgSrc = imgTag["src"]
+	netloc = urlsplit(url).netloc
+	scheme = urlsplit(url).scheme
+	path = urlsplit(url).path
+	
 	print("[+] Downloading image {0}...".format(imgSrc))
 	
 	try:
 		imgContent = urllib2.urlopen(imgSrc).read()
 	except:
-		imgContent = urllib2.urlopen(urllib2.os.path.join(url,imgSrc.lstrip("/"))).read()
+		if "html" in urllib2.os.path.split(path)[-1]:
+			root_path = urllib2.os.path.split(path)[0].lstrip("/")
+		else:
+			root_path = path.lstrip("/")
+		
+		imgUrl = urllib2.os.path.join("{0}://{1}".format(scheme,netloc),root_path,imgSrc.lstrip("/"))
+		imgContent = urllib2.urlopen(imgUrl).read()
+		
 	finally:
 		
 		imgFileName = basename(urlsplit(imgSrc)[2])
-		netloc = urlsplit(url)[1]
 		imgFile = open(os.path.join(downloads,netloc,imgFileName),"wb")
 		imgFile.write(imgContent)
 		imgFile.close()
@@ -57,12 +67,30 @@ def testForExif(imgFileName):
 
 			if exifGPS:
 				print("[*] {0} contains GPS MetaData".format(imgFileName))
+				return exifGPS
+			else:
+				return None
 	
 	except Exception,e:
 		print("ERROR: ",e)
 		
-		pass
-			
+		return None
+
+
+#Interpret the GPS exif tag value
+def interpretGPS(gpsTag):
+	
+	gpsInfo = dict()
+	try:
+		for key in gpsTag.keys():
+			decoded = GPSTAGS.get(key,key)
+			gpsInfo[decoded] = gpsTag[key]
+		
+		return gpsInfo
+	
+	except:
+		return None
+
 def main():
 	
 	#Argument parsing
@@ -94,7 +122,10 @@ def main():
 	for imgTag in imgTags:
 		
 		imgFileName = downloadImage(url,imgTag,downloads)
-		testForExif(os.path.join(downloads,netloc,imgFileName))
+		gpsTag = testForExif(os.path.join(downloads,netloc,imgFileName))
+		
+		if gpsTag:
+			print(interpretGPS(gpsTag))
 
 if __name__=="__main__":
 	main()
