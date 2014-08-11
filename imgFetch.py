@@ -7,7 +7,7 @@ from urlparse import urlsplit
 from os.path import basename
 from bs4 import BeautifulSoup
 from PIL import Image
-from PIL.ExifTags import TAGS
+from PIL.ExifTags import TAGS,GPSTAGS
 
 #Find image tags in a webpage
 def findImages(url):
