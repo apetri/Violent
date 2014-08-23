@@ -15,7 +15,7 @@ def interceptWeb(pkt):
 		if source not in traffic_data.keys():
 			new_client = True
 			for client in traffic_data.keys():
-				if source not in traffic_data[client]:
+				if source not in traffic_data[client] and destination not in traffic_data.keys():
 					continue
 				else:
 					new_client = False
@@ -30,11 +30,10 @@ def interceptWeb(pkt):
 			
 			if destination not in traffic_data[source]:
 				traffic_data[source].append(destination)
-			
-			try:
-				print("[+] Client: {0} connected to {1}".format(source,gethostbyaddr(destination)[0]))
-			except herror:
-				print("[+] Client: {0} connected to {1}".format(source,destination))
+				try:
+					print("[+] Client: {0} connected to {1}({2})".format(source,gethostbyaddr(destination)[0],destination))
+				except herror:
+					print("[+] Client: {0} connected to {1}".format(source,destination))
 
 def main():
 	
@@ -48,7 +47,6 @@ def main():
 		print("[*] Starting web traffic interception on {0}".format(conf.iface))
 		sniff(filter="tcp port 80",prn=interceptWeb,store=0)
 	except KeyboardInterrupt:
-		print("[-]KeyboardInterrupt detected, stopping")
 		exit(0)
 
 if __name__ == "__main__":
