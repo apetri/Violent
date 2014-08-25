@@ -1,6 +1,15 @@
 from scapy.all import *
 from socket import gethostbyaddr,herror
+
 import argparse
+
+import sys,signal
+
+def handler(sig,frame):
+	for client in traffic_data.keys():
+		print("{0}->{1}".format(client,traffic_data[client]))
+	
+	sys.exit(0)
 
 traffic_data = dict()
 
@@ -43,6 +52,8 @@ def interceptWeb(pkt):
 
 
 def main():
+	
+	signal.signal(signal.SIGINT,handler)
 	
 	parser = argparse.ArgumentParser()
 	parser.add_argument("-i","--interface",dest="interface",action="store",default="eth0",help="network interface")
