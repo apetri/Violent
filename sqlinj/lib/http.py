@@ -1,6 +1,7 @@
 #system
 import socket
 import logging
+import urllib
 
 #############
 #Http server#
@@ -70,6 +71,33 @@ class BrowserClient(object):
 
 	def parseRequest(self):
 		return self.clntfp.readline().strip("\r\n").split(" ")
+
+	@staticmethod
+	def parseQuery(request):
+
+		#Split request string
+		tok = request.find("?")
+		if tok==-1:
+			return None
+
+		method = request[:tok]
+		query = urllib.unquote_plus(request[tok+1:])
+		if not len(query):
+			return None
+
+		#Parse the query
+		if method!="/query":
+			return None
+
+		qdict = dict()
+		for clause in query.split("&"):
+			tok = clause.find("=")
+			k = clause[:tok]
+			v = clause[tok+1:]
+			qdict[k] = v
+
+		return qdict
+
 
 	###############################
 	#Send HTML formatted responses#

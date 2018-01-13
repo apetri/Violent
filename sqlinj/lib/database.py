@@ -1,4 +1,5 @@
 #system
+import logging
 import sqlite3
 import hashlib
 
@@ -39,26 +40,29 @@ def makeRandomDatabase(nrecords=100):
 	zp = np.random.randint(10000,100000,size=nrecords)
 	cty = np.random.choice(city,nrecords)
 
-	#SSN
-	ssn1 = np.random.randint(0,1000,size=nrecords)
-	ssn2 = np.random.randint(0,100,size=nrecords)
-	ssn3 = np.random.randint(0,10000,size=nrecords)
+	#Phone number
+	phone1 = np.random.randint(0,1000,size=nrecords)
+	phone2 = np.random.randint(0,100,size=nrecords)
+	phone3 = np.random.randint(0,10000,size=nrecords)
 
 	#Build database
 	db = pd.DataFrame({
 
-		"first" : first,
-		"last" : last,
-		"age" : age,
-		"address" : [ str(st3[n]) + " " + st2[n] + " " + st1[n] for n in range(nrecords) ],
-		"zip" : zp,
-		"city" : cty,
-		"ssn" : [ "{0:03d}-{1:02d}-{2:04d}".format(ssn1[n],ssn2[n],ssn3[n]) for n in range(nrecords) ]
+		"First" : first,
+		"Last" : last,
+		"Age" : age,
+		"Address" : [ str(st3[n]) + " " + st2[n] + " " + st1[n] for n in range(nrecords) ],
+		"Zip" : zp,
+		"City" : cty,
+		"Email" : [ f+"@"+last[n]+".com" for n,f in enumerate(first) ],
+		"Phone" : [ "{0:03d}-{1:02d}-{2:04d}".format(phone1[n],phone2[n],phone3[n]) for n in range(nrecords) ],
+		"username" : [ f.lower()+last[n].lower() for n,f in enumerate(first) ],
+		"password" : PeopleDatabase.hashpwd("puccio") 
 
 		})
 
 	#Return
-	return db[["first","last","age","ssn","address","city","zip"]]
+	return db[["username","password","First","Last","Age","Phone","Address","City","Zip","Email"]]
 
 #############################
 #Connections to the database#
@@ -73,6 +77,8 @@ class PeopleDatabase(object):
 
 	#Constructor, context managers
 	def __init__(self,dbname):
+		logging.info("Opened connection to database: {0}".format(dbname))
+		self.dbname = dbname
 		self.conn = sqlite3.connect(dbname)
 		self.cursor = self.conn.cursor()
 
@@ -80,10 +86,10 @@ class PeopleDatabase(object):
 		return self
 
 	def __exit__(self,*args):
+		logging.info("Closed connection to database: {0}".format(self.dbname))
 		self.conn.close()
 
 	#Send a query to the database and retrieve the results
-	#This is voluntarily made vulnerable to SQL injection
 	def query(self,q):
 		records = self.cursor.execute(q)
 		cnames = [ c[0] for c in self.cursor.description ]
